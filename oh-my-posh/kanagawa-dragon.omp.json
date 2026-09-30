@@ -1,0 +1,88 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "palette": {
+    "blue": "#8ba4b0",
+    "green": "#87a987",
+    "yellow": "#c4b28a",
+    "violet": "#8992a7",
+    "red": "#c4746e",
+    "aqua": "#8ea4a2",
+    "pink": "#a292a3",
+    "ash": "#737c73",
+    "gray": "#a6a69c"
+  },
+  "blocks": [
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "segments": [
+        {
+          "type": "session",
+          "style": "plain",
+          "foreground": "p:red",
+          "template": "{{ .UserName }} "
+        },
+        {
+          "type": "path",
+          "style": "plain",
+          "foreground": "p:blue",
+          "options": { "style": "full" },
+          "template": "{{ .Path }} "
+        }
+      ]
+    },
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "segments": [
+        {
+          "type": "git",
+          "style": "plain",
+          "foreground": "p:ash",
+          "options": {
+            "branch_ahead_icon": "<p:aqua>⇡ </>",
+            "branch_behind_icon": "<p:aqua>⇣ </>",
+            "branch_icon": "",
+            "github_icon": ""
+          },
+          "template": "{{ .UpstreamIcon }}{{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}<p:pink>*</>{{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }}{{ if gt .StashCount 0 }}  {{ .StashCount }}{{ end }} "
+        }
+      ]
+    },
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "segments": [
+        {
+          "type": "executiontime",
+          "style": "plain",
+          "foreground": "p:green",
+          "options": { "style": "austin" },
+          "template": " {{ .FormattedMs }} "
+        }
+      ]
+    },
+    {
+      "alignment": "left",
+      "type": "prompt",
+      "newline": true,
+      "segments": [
+        {
+          "type": "status",
+          "style": "plain",
+          "foreground": "p:violet",
+          "foreground_templates": [ "{{ if gt .Code 0 }}p:red{{ end }}" ],
+          "options": { "always_enabled": true },
+          "template": "❯ "
+        }
+      ]
+    }
+  ],
+  "console_title_template": "{{if .Root}}(Admin){{end}} {{.PWD}}",
+  "transient_prompt": {
+    "foreground": "p:violet",
+    "foreground_templates": [ "{{ if gt .Code 0 }}p:red{{ end }}" ],
+    "template": "❯ "
+  },
+  "version": 4
+}
