@@ -1,0 +1,25 @@
+# Paths here are target paths (relative to $HOME), not source names.
+README.md
+
+# Neovim's lockfile differs per machine; Lazy owns it.
+.config/nvim/lazy-lock.json
+
+{{ if ne .chezmoi.os "windows" -}}
+AppData
+Documents
+kanagawa-dragon.omp.json
+.chezmoiscripts/*.ps1
+{{- end }}
+
+{{ if ne .chezmoi.os "linux" -}}
+.bashrc
+.config/hypr
+.config/omarchy
+.config/mise
+.chezmoiscripts/*.sh
+{{- end }}
+
+{{ if eq .chezmoi.os "linux" -}}
+# Omarchy symlinks this to the active theme's neovim.lua; leave it alone.
+.config/nvim/lua/plugins/theme.lua
+{{- end }}

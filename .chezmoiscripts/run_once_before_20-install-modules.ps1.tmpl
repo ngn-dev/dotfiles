@@ -1,0 +1,18 @@
+{{ if eq .chezmoi.os "windows" -}}
+# Installs the PowerShell modules the profile loads. Runs once per machine.
+$ErrorActionPreference = 'Stop'
+$Modules = @('PSReadLine', 'Terminal-Icons', 'PSFzf', 'posh-git')
+
+Write-Host "==> Installing PowerShell modules" -ForegroundColor Cyan
+if (-not (Get-PSRepository PSGallery -ErrorAction SilentlyContinue | Where-Object InstallationPolicy -eq 'Trusted')) {
+    Set-PSRepository PSGallery -InstallationPolicy Trusted
+}
+foreach ($m in $Modules) {
+    if (Get-Module -ListAvailable -Name $m | Where-Object { $m -ne 'PSReadLine' -or $_.Version -ge '2.2' }) {
+        Write-Host "    $m (already installed)" -ForegroundColor DarkGray
+    } else {
+        Install-Module $m -Scope CurrentUser -Force -AcceptLicense
+        Write-Host "    $m installed" -ForegroundColor Green
+    }
+}
+{{ end -}}

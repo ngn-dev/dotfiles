@@ -4,3 +4,8 @@
 
 -- GUI font (Neovide, nvim-qt, etc.); terminal Neovim uses the terminal's font
 vim.opt.guifont = "JetBrainsMono Nerd Font:h12"
+
+-- Omarchy's OSC 52 clipboard for tmux/SSH sessions; a no-op outside those.
+if vim.fn.has("win32") == 0 then
+  require("config.remote_clipboard").setup()
+end

@@ -1,46 +1,79 @@
 # dotfiles
 
-Windows shell, editor, and terminal setup. Kanagawa Dragon everywhere, JetBrainsMono Nerd Font, PowerShell 7.
+Shell, editor, and desktop config for two machines: an Omarchy (Arch + Hyprland) desktop and a Windows box. Kanagawa Dragon everywhere, JetBrainsMono Nerd Font, Neovim with LazyVim on both.
+
+Managed with [chezmoi](https://www.chezmoi.io/). One source tree mirrors `$HOME`; `.chezmoiignore` decides per OS what gets installed, templates fill in per-machine values.
 
 ## New machine
 
-From any PowerShell window:
+**Omarchy / Arch**
 
-```powershell
-irm https://raw.githubusercontent.com/ngn-dev/dotfiles/main/setup.ps1 | iex
+```bash
+omarchy pkg add chezmoi && chezmoi init --apply ngn-dev
 ```
 
-That clones this repo to `~\source\dotfiles` and runs `setup.ps1` from there. Open a new Windows Terminal tab when it finishes. The first Neovim launch installs plugins.
+**Windows** (from any PowerShell window; turn on *Developer Mode* first so symlinks work without admin)
 
-Turn on **Developer Mode** (Settings > System > For developers) first if you want the config files symlinked rather than copied. Symlinks mean editing a live config edits the repo. Without them the script copies, and `sync.ps1` pulls live changes back into the repo later.
+```powershell
+winget install twpayne.chezmoi; chezmoi init --apply ngn-dev
+```
 
-## What it installs
+`init` clones this repo to `~/.local/share/chezmoi`, asks for a git name and email, then `apply` installs packages, places every config, and on Windows registers the terminal scheme. Open a new terminal when it finishes. The first Neovim launch installs plugins.
 
-| Category | Tools |
+To use an existing checkout instead of letting chezmoi clone:
+
+```bash
+chezmoi init --apply --source ~/Projects/dotfiles
+```
+
+## Day to day
+
+| Command | Does |
 | --- | --- |
-| Shell | PowerShell 7, Windows Terminal, oh-my-posh, zoxide, PSReadLine, PSFzf, posh-git, Terminal-Icons |
-| Editor | Neovim (LazyVim), Neovide, gcc via WinLibs for treesitter |
-| CLI | git, fzf, ripgrep, fd, bat, eza, lazygit, fnm |
-| Font | JetBrainsMono Nerd Font |
+| `chezmoi diff` | what `apply` would change on this machine (also shows what an Omarchy update rewrote) |
+| `chezmoi apply` | write the repo's version into place |
+| `chezmoi edit ~/.config/hypr/bindings.lua --apply` | edit the source file and apply in one go |
+| `chezmoi re-add` | you edited the live file; pull it back into the repo |
+| `chezmoi add ~/.config/foo/bar` | start tracking a new file |
+| `chezmoi unmanaged ~/.config/nvim` | files in a tracked dir that the repo doesn't know about |
+| `chezmoi cd` | shell in the source tree, for git |
 
-## What it configures
+Files are copied into place, not symlinked, so editing a live file does nothing until `re-add`. That is deliberate: Omarchy upgrades rewrite files under `~/.config`, and `chezmoi diff` makes those rewrites visible instead of silently replacing a symlink.
 
-| Repo path | Installed to |
-| --- | --- |
-| `powershell/Microsoft.PowerShell_profile.ps1` | `~\Documents\PowerShell\` |
-| `powershell/profile.ps1` | `~\Documents\PowerShell\` |
-| `oh-my-posh/kanagawa-dragon.omp.json` | `~\` |
-| `nvim/` | `%LOCALAPPDATA%\nvim\` |
-| `bat/Kanagawa.tmTheme` | `%APPDATA%\bat\themes\` |
-| `windows-terminal/kanagawa-dragon.json` | merged into Windows Terminal `settings.json` as the default scheme |
+## Layout
 
-It also sets the git identity if none exists and points `core.editor` at Neovide.
+| Source | Target | Where |
+| --- | --- | --- |
+| `dot_config/nvim/` | `~/.config/nvim` (Windows also links `%LOCALAPPDATA%\nvim` to it) | both |
+| `dot_config/bat/themes/` | `~/.config/bat/themes` (Windows links `%APPDATA%\bat` to it) | both |
+| `dot_config/git/config.tmpl` | `~/.config/git/config`, identity from `chezmoi init` answers | both |
+| `dot_config/hypr/*.lua`, `hyprsunset.conf` | `~/.config/hypr/` user overrides. `monitors.lua.tmpl` picks a block by hostname | linux |
+| `dot_config/omarchy/` | `~/.config/omarchy/` bar layout, menu extensions, branding, default agent | linux |
+| `dot_config/mise/config.toml` | `~/.config/mise/config.toml` | linux |
+| `dot_bashrc` | `~/.bashrc` | linux |
+| `Documents/PowerShell/` | `~\Documents\PowerShell\` profiles | windows |
+| `kanagawa-dragon.omp.json` | `~\` oh-my-posh theme | windows |
+| `.chezmoidata/windows-terminal.json` | merged into Windows Terminal `settings.json` by the `modify_` script under `AppData/` | windows |
+| `.chezmoiscripts/` | winget / PowerShell module / `omarchy pkg add` installs, `bat cache --build`, `mise install` | per OS |
 
-## Re-running
+Naming: `dot_` is a leading dot, `private_` is mode 600, `symlink_` holds a link target, `modify_` is a script that rewrites an existing file, `.tmpl` is a Go template. Scripts prefixed `run_once_` run once per machine, `run_onchange_` whenever their rendered content changes.
 
-`setup.ps1` is idempotent. Skip stages with `-SkipPackages`, `-SkipModules`, `-SkipConfigs`, or `-SkipTerminal`. Force copies with `-Copy`. Existing config files are backed up next to themselves with a `.bak-<timestamp>` suffix before being replaced.
+## Neovim
 
-## Profile cheat sheet
+One LazyVim config on both OSes. Everything Omarchy-specific is gated on `lua/config/omarchy.lua`, which checks for Omarchy's active theme file and is false on Windows:
+
+- `lua/plugins/theme.lua` sets Kanagawa Dragon. On Omarchy this path is a symlink to the active theme's `neovim.lua`, so chezmoi ignores it there and Omarchy's theme switcher keeps working.
+- `omarchy-all-themes.lua`, `omarchy-theme-hotreload.lua`, `omarchy-defaults.lua`, and `plugin/after/transparency.lua` are Omarchy's stock extras (hot theme reload, transparent background, no news popups). Omarchy's own copy lives at `/usr/share/omarchy-nvim/config/` if you need to compare.
+- `lazy-lock.json` is not tracked; Lazy owns it per machine.
+
+## Omarchy notes
+
+- Only user-override files are tracked. Omarchy's defaults live in `/usr/share/omarchy/` and are loaded before these.
+- After `omarchy update`, run `chezmoi diff` to see what it changed. `chezmoi re-add` keeps the upgrade's version, `chezmoi apply` restores yours.
+- Hyprland reloads on save. Validate with `hyprctl reload && hyprctl configerrors`.
+- `~/.config/omarchy/shell.json` is the bar layout; it hot-reloads.
+
+## Profile cheat sheet (Windows)
 
 Run `Show-Help` in the shell for the full list. Highlights:
 
@@ -56,11 +89,3 @@ Run `Show-Help` in the shell for the full list. Highlights:
 | `grep` | ripgrep |
 | `la`, `ll`, `lt` | eza list all / list / tree |
 | `z <dir>` | zoxide jump |
-
-## Neovim
-
-Stock [LazyVim](https://www.lazyvim.org/) starter with Kanagawa Dragon and the Nerd Font set for GUI use. `lazy-lock.json` is committed so a fresh install reproduces the same plugin versions. Run `:Lazy update` to move forward and commit the new lockfile.
-
-## Credits
-
-The PowerShell profile started life as [Chris Titus Tech's profile](https://github.com/ChrisTitusTech/powershell-profile) and is maintained here independently. The Neovim config is built on the LazyVim starter (Apache 2.0, see `nvim/LICENSE`). Colors are from [kanagawa.nvim](https://github.com/rebelot/kanagawa.nvim).

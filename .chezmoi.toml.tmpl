@@ -1,0 +1,14 @@
+{{- $name := promptStringOnce . "name" "Git user name" "ngn" -}}
+{{- $email := promptStringOnce . "email" "Git email address" -}}
+# Generated from .chezmoi.toml.tmpl by `chezmoi init`. Re-run `chezmoi init` to change answers.
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
+[data]
+    name = {{ $name | quote }}
+    email = {{ $email | quote }}
+{{- if eq .chezmoi.os "windows" }}
+
+[interpreters.ps1]
+    command = {{ if lookPath "pwsh" }}"pwsh"{{ else }}"powershell"{{ end }}
+    args = ["-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"]
+{{- end }}

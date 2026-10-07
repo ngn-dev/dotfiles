@@ -1,0 +1,6 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/bash
+# Install the tools pinned in ~/.config/mise/config.toml whenever that file changes.
+# config hash: {{ include "dot_config/mise/config.toml" | sha256sum }}
+command -v mise >/dev/null && mise install --yes
+{{ end -}}

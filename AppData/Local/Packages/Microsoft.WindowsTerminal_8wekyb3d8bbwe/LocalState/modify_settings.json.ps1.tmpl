@@ -1,0 +1,33 @@
+{{ if eq .chezmoi.os "windows" -}}
+# chezmoi modify script: receives the current settings.json on stdin, writes the
+# new one to stdout. Registers the Kanagawa Dragon scheme (from
+# .chezmoidata/windows-terminal.json) and makes it the default with the Nerd Font.
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+$scheme = '{{ .windowsTerminalScheme | toJson }}' | ConvertFrom-Json
+$raw = [Console]::In.ReadToEnd()
+
+if ([string]::IsNullOrWhiteSpace($raw)) {
+    # Windows Terminal has not run yet; a partial file is fine, it fills in the rest.
+    $settings = [pscustomobject]@{
+        '$schema' = 'https://aka.ms/terminal-profiles-schema'
+        profiles  = [pscustomobject]@{ defaults = [pscustomobject]@{} }
+        schemes   = @()
+    }
+} else {
+    $settings = $raw | ConvertFrom-Json
+}
+
+if (-not $settings.PSObject.Properties['schemes']) { $settings | Add-Member schemes @() }
+$settings.schemes = @($settings.schemes | Where-Object name -ne $scheme.name) + $scheme
+
+if (-not $settings.PSObject.Properties['profiles']) { $settings | Add-Member profiles ([pscustomobject]@{}) }
+if (-not $settings.profiles.PSObject.Properties['defaults']) { $settings.profiles | Add-Member defaults ([pscustomobject]@{}) }
+$d = $settings.profiles.defaults
+if ($d.PSObject.Properties['colorScheme']) { $d.colorScheme = $scheme.name } else { $d | Add-Member colorScheme $scheme.name }
+if (-not $d.PSObject.Properties['font']) { $d | Add-Member font ([pscustomobject]@{}) }
+if ($d.font.PSObject.Properties['face']) { $d.font.face = 'JetBrainsMono Nerd Font' } else { $d.font | Add-Member face 'JetBrainsMono Nerd Font' }
+
+[Console]::Out.Write(($settings | ConvertTo-Json -Depth 32))
+{{ end -}}

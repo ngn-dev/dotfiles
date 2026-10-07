@@ -1,0 +1,5 @@
+{{ if eq .chezmoi.os "windows" -}}
+# Rebuild bat's theme cache whenever the theme file changes.
+# theme hash: {{ include "dot_config/bat/themes/Kanagawa.tmTheme" | sha256sum }}
+if (Get-Command bat -ErrorAction SilentlyContinue) { bat cache --build | Out-Null }
+{{ end -}}

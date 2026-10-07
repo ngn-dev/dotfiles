@@ -1,0 +1,7 @@
+{{ if eq .chezmoi.os "linux" -}}
+#!/bin/bash
+# Omarchy already ships neovim, lazygit, bat, eza, fzf, ripgrep, fd, zoxide, tmux,
+# starship and mise. This only fills gaps on a trimmed install. Runs once per machine.
+set -euo pipefail
+omarchy pkg add chezmoi neovim lazygit bat eza fzf ripgrep fd zoxide
+{{ end -}}
